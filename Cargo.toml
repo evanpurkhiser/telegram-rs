@@ -20,7 +20,7 @@ xdg = "3"
 dirs = "5"
 chrono = "0.4"
 rpassword = "7"
-audio-video-metadata = "0.1.7"
+ffprobe = "0.4.0"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

@@ -1,7 +1,6 @@
 use anyhow::Result;
 use std::path::Path;
 use tdlib_rs::{enums, functions, types};
-use audio_video_metadata::{get_format_from_file, Metadata};
 
 // Helper to convert tdlib errors
 fn convert_tdlib_error<T>(result: Result<T, tdlib_rs::types::Error>) -> Result<T> {
@@ -31,22 +30,35 @@ fn detect_media_type(path: &str) -> Result<&'static str> {
     }
 }
 
-// Extract video metadata (dimensions and duration)
+// Extract video metadata (dimensions and duration) using ffprobe
 fn get_video_metadata(path: &str) -> Result<(i32, i32, i32)> {
-    match get_format_from_file(path) {
-        Ok(Metadata::Video(video_meta)) => {
-            let width = video_meta.dimensions.width as i32;
-            let height = video_meta.dimensions.height as i32;
-            let duration = video_meta.audio.duration.map(|d| d.as_secs() as i32).unwrap_or(0);
+    match ffprobe::ffprobe(path) {
+        Ok(info) => {
+            // Find the first video stream
+            let video_stream = info.streams.iter().find(|s| s.codec_type == Some("video".to_string()));
+            
+            let (width, height) = if let Some(stream) = video_stream {
+                (stream.width.unwrap_or(0) as i32, stream.height.unwrap_or(0) as i32)
+            } else {
+                (0, 0)
+            };
+            
+            // Get duration from format or stream
+            let duration = info.format.duration
+                .and_then(|d| d.parse::<f64>().ok())
+                .map(|d| d as i32)
+                .or_else(|| {
+                    video_stream.and_then(|s| s.duration.as_ref())
+                        .and_then(|d| d.parse::<f64>().ok())
+                        .map(|d| d as i32)
+                })
+                .unwrap_or(0);
+            
             Ok((width, height, duration))
-        }
-        Ok(_) => {
-            // Not a video, return zeros
-            Ok((0, 0, 0))
         }
         Err(e) => {
             // Failed to extract metadata, log warning and use zeros
-            eprintln!("Warning: Failed to extract video metadata: {:?}", e);
+            eprintln!("Warning: Failed to extract video metadata: {}", e);
             Ok((0, 0, 0))
         }
     }
