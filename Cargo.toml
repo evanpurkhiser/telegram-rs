@@ -19,6 +19,7 @@ toml = "0.8"
 xdg = "3"
 dirs = "5"
 chrono = "0.4"
+rpassword = "7"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

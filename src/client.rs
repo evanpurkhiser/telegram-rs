@@ -196,15 +196,10 @@ impl TelegramClient {
     }
     
     async fn send_password(&self) -> Result<()> {
-        eprint!("Enter 2FA password: ");
-        io::stderr().flush()?;
-        
         let password = tokio::task::spawn_blocking(|| {
-            let mut input = String::new();
-            std::io::stdin().read_line(&mut input).unwrap();
-            input.trim().to_string()
+            rpassword::prompt_password("Enter Telegram password: ")
         })
-        .await?;
+        .await??;
         
         convert_tdlib_error(
             functions::check_authentication_password(password, self.client_id).await
