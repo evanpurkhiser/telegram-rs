@@ -60,13 +60,17 @@ enum Commands {
     /// List all contacts
     Contacts,
     
-    /// Send a text message to a chat
+    /// Send a text message or files to a chat
     Send {
         /// Chat ID
         chat_id: i64,
         
-        /// Message text (use "-" to read from stdin)
-        message: String,
+        /// Message text (optional if sending files, use "-" to read from stdin)
+        message: Option<String>,
+        
+        /// File(s) to send (can specify multiple times)
+        #[arg(short, long)]
+        file: Vec<String>,
     },
     
     /// Search messages in a chat
@@ -126,21 +130,22 @@ async fn main() -> Result<()> {
             client.close().await?;
             result
         }
-        Commands::Send { chat_id, message } => {
+        Commands::Send { chat_id, message, file } => {
             let mut client = client::TelegramClient::new(cli.verbose).await?;
             client.authenticate(None).await?;
             
             // Read from stdin if message is "-"
-            let message = if message == "-" {
-                use std::io::Read;
-                let mut buffer = String::new();
-                std::io::stdin().read_to_string(&mut buffer)?;
-                buffer
-            } else {
-                message
+            let message = match message {
+                Some(text) if text == "-" => {
+                    use std::io::Read;
+                    let mut buffer = String::new();
+                    std::io::stdin().read_to_string(&mut buffer)?;
+                    Some(buffer)
+                }
+                other => other,
             };
             
-            let result = commands::send::run(client.client_id(), chat_id, message).await;
+            let result = commands::send::run(client.client_id(), chat_id, message, file).await;
             client.close().await?;
             result
         }
