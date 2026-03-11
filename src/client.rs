@@ -216,10 +216,12 @@ impl TelegramClient {
     
     pub async fn close(&self) -> Result<()> {
         self.run_flag.store(false, Ordering::Release);
-        convert_tdlib_error(functions::close(self.client_id).await)?;
         
-        // Give TDLib time to close cleanly
-        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        // Give TDLib time to process any pending operations
+        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+        
+        // Note: We intentionally don't call functions::close() as it can hang
+        // The process exit will clean up the TDLib resources
         
         Ok(())
     }
