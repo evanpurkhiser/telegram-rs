@@ -122,7 +122,7 @@ impl TelegramClient {
                 api_id,
                 api_hash,
                 "en".to_string(), // system_language_code
-                "Desktop".to_string(), // device_model
+                "telegram-rs".to_string(), // device_model (shows in devices list)
                 std::env::consts::OS.to_string(), // system_version
                 env!("CARGO_PKG_VERSION").to_string(), // application_version
                 self.client_id,
