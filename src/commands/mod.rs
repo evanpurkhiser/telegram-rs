@@ -1,6 +1,6 @@
 pub mod chats;
 pub mod history;
-pub mod contact_list;
+pub mod contacts;
 pub mod send;
 pub mod search;
-pub mod user_info;
+pub mod user;

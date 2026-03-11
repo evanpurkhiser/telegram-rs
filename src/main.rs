@@ -58,7 +58,7 @@ enum Commands {
     },
     
     /// List all contacts
-    ContactList,
+    Contacts,
     
     /// Send a text message to a chat
     Send {
@@ -83,7 +83,7 @@ enum Commands {
     },
     
     /// Get information about a user
-    UserInfo {
+    User {
         /// User ID
         user_id: i64,
     },
@@ -119,10 +119,10 @@ async fn main() -> Result<()> {
             client.close().await?;
             result
         }
-        Commands::ContactList => {
+        Commands::Contacts => {
             let mut client = client::TelegramClient::new(cli.verbose).await?;
             client.authenticate(None).await?;
-            let result = commands::contact_list::run(client.client_id(), cli.json).await;
+            let result = commands::contacts::run(client.client_id(), cli.json).await;
             client.close().await?;
             result
         }
@@ -151,10 +151,10 @@ async fn main() -> Result<()> {
             client.close().await?;
             result
         }
-        Commands::UserInfo { user_id } => {
+        Commands::User { user_id } => {
             let mut client = client::TelegramClient::new(cli.verbose).await?;
             client.authenticate(None).await?;
-            let result = commands::user_info::run(client.client_id(), user_id, cli.json).await;
+            let result = commands::user::run(client.client_id(), user_id, cli.json).await;
             client.close().await?;
             result
         }
