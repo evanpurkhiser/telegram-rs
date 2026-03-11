@@ -1,0 +1,84 @@
+use anyhow::Result;
+use serde_json::json;
+use tdlib_rs::{enums, functions, types};
+
+// Helper to convert tdlib errors
+fn convert_tdlib_error<T>(result: Result<T, tdlib_rs::types::Error>) -> Result<T> {
+    result.map_err(|e| anyhow::anyhow!("TDLib error: {:?}", e))
+}
+
+pub async fn run(client_id: i32, chat_id: i64, query: String, limit: i32, json_output: bool) -> Result<()> {
+    let search_result = convert_tdlib_error(
+        functions::search_chat_messages(
+            chat_id,
+            query,
+            None, // sender_id
+            0, // from_message_id
+            0, // offset
+            limit,
+            None, // filter
+            0, // message_thread_id
+            None, // saved_messages_topic_id
+            client_id,
+        ).await
+    )?;
+    
+    let mut messages = Vec::new();
+    
+    if let enums::FoundChatMessages::FoundChatMessages(found_messages) = search_result {
+        for msg_option in found_messages.messages {
+            if let Some(msg) = msg_option {
+                let sender = match &msg.sender_id {
+                    enums::MessageSender::User(user) => {
+                        let user_result = convert_tdlib_error(
+                            functions::get_user(user.user_id, client_id).await
+                        )?;
+                        
+                        if let enums::User::User(user_info) = user_result {
+                            format!("{} {}", user_info.first_name, user_info.last_name)
+                        } else {
+                            "Unknown User".to_string()
+                        }
+                    }
+                    enums::MessageSender::Chat(chat) => {
+                        let chat_result = convert_tdlib_error(
+                            functions::get_chat(chat.chat_id, client_id).await
+                        )?;
+                        
+                        if let enums::Chat::Chat(chat_info) = chat_result {
+                            chat_info.title
+                        } else {
+                            "Unknown Chat".to_string()
+                        }
+                    }
+                };
+                
+                let text = extract_message_text(&msg.content);
+                
+                messages.push(json!({
+                    "id": msg.id,
+                    "sender": sender,
+                    "date": msg.date,
+                    "text": text,
+                }));
+            }
+        }
+    }
+    
+    let output = json!(messages);
+    crate::output::print_output(&output, json_output);
+    
+    Ok(())
+}
+
+fn extract_message_text(content: &enums::MessageContent) -> String {
+    match content {
+        enums::MessageContent::MessageText(text) => text.text.text.clone(),
+        enums::MessageContent::MessagePhoto(photo) => photo.caption.text.clone(),
+        enums::MessageContent::MessageVideo(video) => video.caption.text.clone(),
+        enums::MessageContent::MessageDocument(doc) => doc.caption.text.clone(),
+        enums::MessageContent::MessageAudio(audio) => audio.caption.text.clone(),
+        enums::MessageContent::MessageVoiceNote(voice) => voice.caption.text.clone(),
+        _ => String::new(),
+    }
+}

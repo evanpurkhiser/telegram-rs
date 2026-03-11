@@ -1,0 +1,26 @@
+[package]
+name = "telegram-rs"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "tg"
+path = "src/main.rs"
+
+[dependencies]
+tdlib-rs = { path = "../tdlib-rs/tdlib-rs", features = ["download-tdlib"] }
+clap = { version = "4", features = ["derive"] }
+toon = "0.1"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+toml = "0.8"
+xdg = "3"
+dirs = "5"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[build-dependencies]
+tdlib-rs = { path = "../tdlib-rs/tdlib-rs", features = ["download-tdlib"] }
