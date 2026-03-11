@@ -12,15 +12,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Checkout tdlib-rs dependency
-        uses: actions/checkout@v4
-        with:
-          repository: FedericoBruzzone/tdlib-rs
-          path: vendor/tdlib-rs
-
-      - name: Link tdlib-rs path dependency
-        run: ln -s "$GITHUB_WORKSPACE/vendor/tdlib-rs" "$GITHUB_WORKSPACE/../tdlib-rs"
-
       - name: Install system dependencies
         run: |
           sudo apt-get update
