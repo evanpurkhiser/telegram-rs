@@ -25,10 +25,9 @@ pub async fn run(client_id: i32, chat_id: i64, message: String) -> Result<()> {
     convert_tdlib_error(
         functions::send_message(
             chat_id,
-            0, // message_thread_id
+            None, // topic_id
             None, // reply_to
             None, // options
-            None, // reply_markup
             content,
             client_id,
         ).await

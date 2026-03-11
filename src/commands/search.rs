@@ -11,14 +11,13 @@ pub async fn run(client_id: i32, chat_id: i64, query: String, limit: i32, json_o
     let search_result = convert_tdlib_error(
         functions::search_chat_messages(
             chat_id,
+            None, // topic_id
             query,
             None, // sender_id
             0, // from_message_id
             0, // offset
             limit,
             None, // filter
-            0, // message_thread_id
-            None, // saved_messages_topic_id
             client_id,
         ).await
     )?;
@@ -26,8 +25,7 @@ pub async fn run(client_id: i32, chat_id: i64, query: String, limit: i32, json_o
     let mut messages = Vec::new();
     
     if let enums::FoundChatMessages::FoundChatMessages(found_messages) = search_result {
-        for msg_option in found_messages.messages {
-            if let Some(msg) = msg_option {
+        for msg in found_messages.messages {
                 let sender = match &msg.sender_id {
                     enums::MessageSender::User(user) => {
                         let user_result = convert_tdlib_error(
@@ -55,13 +53,12 @@ pub async fn run(client_id: i32, chat_id: i64, query: String, limit: i32, json_o
                 
                 let text = extract_message_text(&msg.content);
                 
-                messages.push(json!({
-                    "id": msg.id,
-                    "sender": sender,
-                    "date": msg.date,
-                    "text": text,
-                }));
-            }
+            messages.push(json!({
+                "id": msg.id,
+                "sender": sender,
+                "date": msg.date,
+                "text": text,
+            }));
         }
     }
     
