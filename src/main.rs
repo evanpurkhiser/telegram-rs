@@ -81,6 +81,12 @@ enum Commands {
         #[arg(short, long, default_value = "20")]
         limit: i32,
     },
+    
+    /// Get information about a user
+    UserInfo {
+        /// User ID
+        user_id: i64,
+    },
 }
 
 #[tokio::main]
@@ -142,6 +148,13 @@ async fn main() -> Result<()> {
             let mut client = client::TelegramClient::new(cli.verbose).await?;
             client.authenticate(None).await?;
             let result = commands::search::run(client.client_id(), chat_id, query, limit, cli.json).await;
+            client.close().await?;
+            result
+        }
+        Commands::UserInfo { user_id } => {
+            let mut client = client::TelegramClient::new(cli.verbose).await?;
+            client.authenticate(None).await?;
+            let result = commands::user_info::run(client.client_id(), user_id, cli.json).await;
             client.close().await?;
             result
         }
