@@ -109,6 +109,8 @@ impl TelegramClient {
             .clone()
             .unwrap_or_else(|| "a3406de8d171bb422bb6ddf3bbd800e2".to_string());
         
+        let app_version = format!("telegram-rs {}", env!("CARGO_PKG_VERSION"));
+        
         convert_tdlib_error(
             functions::set_tdlib_parameters(
                 false, // use_test_dc
@@ -122,9 +124,9 @@ impl TelegramClient {
                 api_id,
                 api_hash,
                 "en".to_string(), // system_language_code
-                "telegram-rs".to_string(), // device_model (shows in devices list)
+                "Telegram Rust CLI".to_string(), // device_model (shows in devices list)
                 std::env::consts::OS.to_string(), // system_version
-                env!("CARGO_PKG_VERSION").to_string(), // application_version
+                app_version, // application_version (telegram-rs X.Y.Z)
                 self.client_id,
             ).await
         )?;
