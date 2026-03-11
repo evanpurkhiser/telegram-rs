@@ -16,7 +16,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: FedericoBruzzone/tdlib-rs
-          path: ../tdlib-rs
+          path: vendor/tdlib-rs
+
+      - name: Link tdlib-rs path dependency
+        run: ln -s "$GITHUB_WORKSPACE/vendor/tdlib-rs" "$GITHUB_WORKSPACE/../tdlib-rs"
 
       - name: Install system dependencies
         run: |
