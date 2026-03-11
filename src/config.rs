@@ -4,27 +4,16 @@ use std::fs;
 use std::io::Write;
 use xdg::BaseDirectories;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Config {
     pub phone: Option<String>,
     pub api_id: Option<i32>,
     pub api_hash: Option<String>,
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            phone: None,
-            api_id: None,
-            api_hash: None,
-        }
-    }
-}
-
 pub struct Paths {
     pub config_dir: std::path::PathBuf,
     pub data_dir: std::path::PathBuf,
-    pub download_dir: std::path::PathBuf,
 }
 
 impl Paths {
@@ -62,7 +51,6 @@ impl Paths {
         Ok(Self {
             config_dir,
             data_dir,
-            download_dir,
         })
     }
 
