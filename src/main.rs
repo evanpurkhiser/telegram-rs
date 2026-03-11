@@ -71,6 +71,10 @@ enum Commands {
         /// File(s) to send (can specify multiple times)
         #[arg(short, long)]
         file: Vec<String>,
+        
+        /// Reply to this message ID
+        #[arg(short, long)]
+        reply: Option<i64>,
     },
     
     /// Search messages in a chat
@@ -119,6 +123,7 @@ async fn main() -> Result<()> {
         Commands::History { chat_id, limit, from_message_id } => {
             let mut client = client::TelegramClient::new(cli.verbose).await?;
             client.authenticate(None).await?;
+            client.load_chats().await?;
             let result = commands::history::run(client.client_id(), chat_id, limit, from_message_id, cli.json).await;
             client.close().await?;
             result
@@ -130,9 +135,10 @@ async fn main() -> Result<()> {
             client.close().await?;
             result
         }
-        Commands::Send { chat_id, message, file } => {
+        Commands::Send { chat_id, message, file, reply } => {
             let mut client = client::TelegramClient::new(cli.verbose).await?;
             client.authenticate(None).await?;
+            client.load_chats().await?;
             
             // Read from stdin if message is "-"
             let message = match message {
@@ -145,13 +151,20 @@ async fn main() -> Result<()> {
                 other => other,
             };
             
-            let result = commands::send::run(client.client_id(), chat_id, message, file).await;
+            let pending_ids = commands::send::run(client.client_id(), chat_id, message, file, reply).await?;
+            
+            // Wait for uploads to complete
+            if !pending_ids.is_empty() {
+                client.wait_for_messages(pending_ids).await?;
+            }
+            
             client.close().await?;
-            result
+            Ok(())
         }
         Commands::Search { chat_id, query, limit } => {
             let mut client = client::TelegramClient::new(cli.verbose).await?;
             client.authenticate(None).await?;
+            client.load_chats().await?;
             let result = commands::search::run(client.client_id(), chat_id, query, limit, cli.json).await;
             client.close().await?;
             result

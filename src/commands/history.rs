@@ -58,6 +58,11 @@ pub async fn run(client_id: i32, chat_id: i64, limit: i32, from_message_id: Opti
     if let enums::Messages::Messages(history_data) = history_result {
         for msg_option in history_data.messages.into_iter().rev() {
             if let Some(msg) = msg_option {
+                // Skip messages that are still being sent (pending or failed)
+                if msg.sending_state.is_some() {
+                    continue;
+                }
+                
                 let sender = match &msg.sender_id {
                     enums::MessageSender::User(user) => {
                         let user_result = convert_tdlib_error(
@@ -85,6 +90,16 @@ pub async fn run(client_id: i32, chat_id: i64, limit: i32, from_message_id: Opti
                 
                 let (content_type, text, media_info) = extract_message_info(&msg.content);
                 
+                // Extract reply_to message ID if present
+                let reply_to_msg_id = if let Some(ref reply_to) = msg.reply_to {
+                    match reply_to {
+                        enums::MessageReplyTo::Message(reply_msg) => Some(reply_msg.message_id),
+                        enums::MessageReplyTo::Story(_) => None,
+                    }
+                } else {
+                    None
+                };
+                
                 // Always include the same keys for consistent TOON formatting
                 let msg_obj = json!({
                     "id": msg.id,
@@ -93,6 +108,8 @@ pub async fn run(client_id: i32, chat_id: i64, limit: i32, from_message_id: Opti
                     "content_type": content_type,
                     "text": text,
                     "media": media_info.unwrap_or(json!(null)),
+                    "reply_to": reply_to_msg_id.unwrap_or(0),
+                    "album_id": msg.media_album_id,
                 });
                 
                 messages.push(msg_obj);
