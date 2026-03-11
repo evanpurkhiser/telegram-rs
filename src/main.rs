@@ -41,7 +41,7 @@ enum Commands {
     },
     
     /// List all chats
-    DialogList,
+    Chats,
     
     /// Show message history for a chat
     History {
@@ -105,10 +105,10 @@ async fn main() -> Result<()> {
             client.close().await?;
             Ok(())
         }
-        Commands::DialogList => {
+        Commands::Chats => {
             let mut client = client::TelegramClient::new(cli.verbose).await?;
             client.authenticate(None).await?;
-            let result = commands::dialog_list::run(client.client_id(), cli.json).await;
+            let result = commands::chats::run(client.client_id(), cli.json).await;
             client.close().await?;
             result
         }

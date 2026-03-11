@@ -1,4 +1,4 @@
-pub mod dialog_list;
+pub mod chats;
 pub mod history;
 pub mod contact_list;
 pub mod send;
