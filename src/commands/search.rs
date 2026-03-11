@@ -1,10 +1,27 @@
 use anyhow::Result;
 use serde_json::json;
-use tdlib_rs::{enums, functions, types};
+use tdlib_rs::{enums, functions};
 
 // Helper to convert tdlib errors
 fn convert_tdlib_error<T>(result: Result<T, tdlib_rs::types::Error>) -> Result<T> {
     result.map_err(|e| anyhow::anyhow!("TDLib error: {:?}", e))
+}
+
+// Convert unix timestamp to human-readable format
+fn format_date(timestamp: i32) -> String {
+    use std::time::{SystemTime, UNIX_EPOCH, Duration};
+    
+    let datetime = UNIX_EPOCH + Duration::from_secs(timestamp as u64);
+    
+    if let Ok(duration) = datetime.duration_since(UNIX_EPOCH) {
+        let secs = duration.as_secs();
+        let datetime = chrono::DateTime::<chrono::Local>::from(
+            SystemTime::UNIX_EPOCH + Duration::from_secs(secs)
+        );
+        datetime.format("%b %d %H:%M").to_string()
+    } else {
+        timestamp.to_string()
+    }
 }
 
 pub async fn run(client_id: i32, chat_id: i64, query: String, limit: i32, json_output: bool) -> Result<()> {
@@ -55,8 +72,8 @@ pub async fn run(client_id: i32, chat_id: i64, query: String, limit: i32, json_o
                 
             messages.push(json!({
                 "id": msg.id,
+                "date": format_date(msg.date),
                 "sender": sender,
-                "date": msg.date,
                 "text": text,
             }));
         }
