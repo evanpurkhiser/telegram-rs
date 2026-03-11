@@ -7,16 +7,38 @@ fn convert_tdlib_error<T>(result: Result<T, tdlib_rs::types::Error>) -> Result<T
     result.map_err(|e| anyhow::anyhow!("TDLib error: {:?}", e))
 }
 
-pub async fn run(client_id: i32, chat_id: i64, limit: i32, json_output: bool) -> Result<()> {
-    // Get the chat to find the last message ID
-    let chat_result = convert_tdlib_error(
-        functions::get_chat(chat_id, client_id).await
-    )?;
+// Convert unix timestamp to human-readable format
+fn format_date(timestamp: i32) -> String {
+    use std::time::{SystemTime, UNIX_EPOCH, Duration};
     
-    let from_message_id = if let enums::Chat::Chat(chat) = chat_result {
-        chat.last_message.map(|msg| msg.id).unwrap_or(0)
+    let datetime = UNIX_EPOCH + Duration::from_secs(timestamp as u64);
+    
+    // Format as "Mar 10 21:30"
+    if let Ok(duration) = datetime.duration_since(UNIX_EPOCH) {
+        let secs = duration.as_secs();
+        let datetime = chrono::DateTime::<chrono::Local>::from(
+            SystemTime::UNIX_EPOCH + Duration::from_secs(secs)
+        );
+        datetime.format("%b %d %H:%M").to_string()
     } else {
-        0
+        timestamp.to_string()
+    }
+}
+
+pub async fn run(client_id: i32, chat_id: i64, limit: i32, from_message_id: Option<i64>, json_output: bool) -> Result<()> {
+    // Get the chat to find the last message ID if not provided
+    let from_message_id = if let Some(msg_id) = from_message_id {
+        msg_id
+    } else {
+        let chat_result = convert_tdlib_error(
+            functions::get_chat(chat_id, client_id).await
+        )?;
+        
+        if let enums::Chat::Chat(chat) = chat_result {
+            chat.last_message.map(|msg| msg.id).unwrap_or(0)
+        } else {
+            0
+        }
     };
     
     let history_result = convert_tdlib_error(
@@ -63,17 +85,15 @@ pub async fn run(client_id: i32, chat_id: i64, limit: i32, json_output: bool) ->
                 
                 let (content_type, text, media_info) = extract_message_info(&msg.content);
                 
-                let mut msg_obj = json!({
+                // Always include the same keys for consistent TOON formatting
+                let msg_obj = json!({
                     "id": msg.id,
+                    "date": format_date(msg.date),
                     "sender": sender,
-                    "date": msg.date,
                     "content_type": content_type,
                     "text": text,
+                    "media": media_info.unwrap_or(json!(null)),
                 });
-                
-                if let Some(media) = media_info {
-                    msg_obj["media"] = media;
-                }
                 
                 messages.push(msg_obj);
             }

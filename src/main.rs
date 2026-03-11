@@ -51,6 +51,10 @@ enum Commands {
         /// Number of messages to fetch (default: 50)
         #[arg(short, long, default_value = "50")]
         limit: i32,
+        
+        /// Start from this message ID (for pagination)
+        #[arg(long)]
+        from_message_id: Option<i64>,
     },
     
     /// List all contacts
@@ -102,10 +106,10 @@ async fn main() -> Result<()> {
             client.close().await?;
             result
         }
-        Commands::History { chat_id, limit } => {
+        Commands::History { chat_id, limit, from_message_id } => {
             let mut client = client::TelegramClient::new(cli.verbose).await?;
             client.authenticate(None).await?;
-            let result = commands::history::run(client.client_id(), chat_id, limit, cli.json).await;
+            let result = commands::history::run(client.client_id(), chat_id, limit, from_message_id, cli.json).await;
             client.close().await?;
             result
         }
