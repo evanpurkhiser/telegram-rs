@@ -5,16 +5,27 @@ mod output;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use std::ffi::CString;
+
+unsafe extern "C" {
+    fn td_execute(request: *const libc::c_char) -> *const libc::c_char;
+}
+
+fn td_execute_json(request: &str) {
+    if let Ok(request_c) = CString::new(request) {
+        unsafe {
+            let _ = td_execute(request_c.as_ptr());
+        }
+    }
+}
 
 // Suppress TDLib logs using td_execute before creating the client
 fn suppress_tdlib_logs() {
     // Method 1: Set log stream to empty (complete silence)
-    tdlib_rs::execute(
-        r#"{"@type":"setLogStream", "log_stream":{"@type":"logStreamEmpty"}}"#.to_string(),
-    );
+    td_execute_json(r#"{"@type":"setLogStream", "log_stream":{"@type":"logStreamEmpty"}}"#);
 
     // Method 2: Set verbosity to 0 (just to be safe)
-    tdlib_rs::execute(r#"{"@type":"setLogVerbosityLevel", "new_verbosity_level":0}"#.to_string());
+    td_execute_json(r#"{"@type":"setLogVerbosityLevel", "new_verbosity_level":0}"#);
 }
 
 #[derive(Parser)]
