@@ -44,3 +44,14 @@ jobs:
 
       - name: Build release binary
         run: cargo build --release --locked
+
+  publish_aur:
+    name: Publish package
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: evanpurkhiser/workflows/.github/workflows/bump-aur.yml@main # zizmor: ignore[unpinned-uses]
+    with:
+      package: telegram-rs
+      version: ${{ github.ref_name }}
+    secrets:
+      token: ${{ secrets.AUR_BUMP_DISPATCH_PAT }}
