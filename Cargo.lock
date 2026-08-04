@@ -1978,7 +1978,7 @@ checksum = "36d9eede027648d9cdf4d0777903c3f73ba8ba07d07a87baef070caf309f989e"
 
 [[package]]
 name = "telegram-rs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "chrono",
