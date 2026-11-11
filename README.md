@@ -5,7 +5,8 @@ A small Telegram CLI client built in Rust on top of TDLib.
 [![CI](https://github.com/evanpurkhiser/telegram-rs/actions/workflows/main.yml/badge.svg)](https://github.com/evanpurkhiser/telegram-rs/actions/workflows/main.yml)
 
 >[!NOTE]
-> This project is written completely using Claude. No review of the code been done.
+> This project is written completely using Claude.
+> No review of the code been done.
 
 ## Features
 
