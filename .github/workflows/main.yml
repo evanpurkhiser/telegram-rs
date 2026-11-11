@@ -31,8 +31,10 @@ jobs:
             libssl-dev \
             zlib1g-dev
 
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Set up tools
+        uses: jdx/mise-action@v4.2.0
+        with:
+          cache: false
 
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2.9.3
